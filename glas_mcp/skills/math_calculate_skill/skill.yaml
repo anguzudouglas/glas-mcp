@@ -1,0 +1,5 @@
+name: math_calculate_skill
+tool: math_calculate
+version: "1.0.0"
+description: Guide the agent to write safe, efficient Python math code using numpy, scipy, and sympy for any computation task
+tags: [math, calculation, numpy, scipy, sympy, scientific]

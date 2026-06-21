@@ -1,0 +1,5 @@
+name: xlsx_creation_skill
+tool: document_create_xlsx
+version: "1.0.0"
+description: Guide the agent to generate Excel spreadsheets with data, formatting, formulas, and multiple sheets
+tags: [xlsx, excel, spreadsheet, data, office, report]

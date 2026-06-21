@@ -1,0 +1,5 @@
+name: plot_chart_skill
+tool: plot_chart
+version: "1.0.0"
+description: Guide the agent to generate publication-quality charts with full control over colors, styles, layout, and annotations
+tags: [chart, plot, visualization, matplotlib, graph, image]

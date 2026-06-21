@@ -1,0 +1,192 @@
+name: plot_chart
+description: >
+  Generates a chart using matplotlib and returns it as a base64-encoded PNG
+  (or SVG). The LLM has full control over chart type, data, colors, styles,
+  labels, annotations, grid, legend, fonts, and figure size.
+
+  Supported chart types: line, bar, barh, scatter, pie, histogram, box,
+  area, heatmap, step, stem, errorbar.
+
+  For advanced layouts, use the "custom_code" parameter to inject any
+  matplotlib Python code directly after the axes are created.
+
+input_schema:
+  type: object
+  properties:
+    chart_type:
+      type: string
+      enum:
+        - line
+        - bar
+        - barh
+        - scatter
+        - pie
+        - histogram
+        - box
+        - area
+        - heatmap
+        - step
+        - stem
+        - errorbar
+      description: Type of chart to generate.
+    data:
+      type: object
+      description: >
+        Chart data. Structure depends on chart_type:
+
+        line / area / step / stem:
+          { "x": [1,2,3], "y": [[1,4,9]], "labels": ["Series A"] }
+          y is a list-of-lists so multiple series are supported.
+
+        bar / barh:
+          { "categories": ["A","B","C"], "values": [[10,20,30]], "labels": ["Group 1"] }
+          values is a list-of-lists for grouped bars.
+
+        scatter:
+          { "series": [{"x":[1,2,3], "y":[4,5,6], "label":"S1", "size":[10,20,30]}] }
+          size is optional per-point marker size.
+
+        pie:
+          { "labels": ["A","B","C"], "values": [30,50,20], "explode": [0,0.1,0] }
+          explode is optional — fraction to offset each slice.
+
+        histogram:
+          { "values": [[1,2,3,4,5,5,6,7]], "labels": ["Data"], "bins": 20 }
+
+        box:
+          { "data": [[1,2,3,4,5],[6,7,8,9,10]], "labels": ["Group A","Group B"] }
+
+        heatmap:
+          { "matrix": [[1,2],[3,4]], "row_labels": ["R1","R2"],
+            "col_labels": ["C1","C2"], "annotate": true }
+
+        errorbar:
+          { "x": [1,2,3], "y": [4,5,6], "yerr": [0.5,0.3,0.7], "label": "Measurement" }
+
+    title:
+      type: string
+      description: Chart title. Default empty.
+      default: ""
+    xlabel:
+      type: string
+      description: X-axis label.
+      default: ""
+    ylabel:
+      type: string
+      description: Y-axis label.
+      default: ""
+    colors:
+      type: array
+      items:
+        type: string
+      description: >
+        List of colors for series/bars/slices. Accepts any matplotlib color:
+        hex (#FF5733), named (steelblue, crimson), or RGB tuple as string ("(0.2,0.4,0.8)").
+        If omitted, matplotlib's default color cycle is used.
+      default: []
+    style:
+      type: string
+      description: >
+        Matplotlib style name. Examples: default, ggplot, seaborn-v0_8, dark_background,
+        bmh, fivethirtyeight, tableau-colorblind10, fast.
+        Run plt.style.available for a full list.
+      default: "default"
+    figsize:
+      type: array
+      items:
+        type: number
+      description: >
+        Figure size as [width_inches, height_inches]. Default [10, 6].
+      default: [10, 6]
+    dpi:
+      type: integer
+      description: Image resolution in DPI. Default 150.
+      default: 150
+    grid:
+      type: boolean
+      description: Show grid lines. Default true.
+      default: true
+    grid_axis:
+      type: string
+      enum: ["both", "x", "y"]
+      description: Which axes to draw grid on. Default "both".
+      default: "both"
+    legend:
+      type: boolean
+      description: Show legend. Default true when multiple series are present.
+      default: true
+    legend_location:
+      type: string
+      description: >
+        Legend position. One of: best, upper right, upper left, lower left,
+        lower right, center, center left, center right, upper center, lower center.
+      default: "best"
+    font_size:
+      type: integer
+      description: Base font size for labels and ticks. Default 12.
+      default: 12
+    title_font_size:
+      type: integer
+      description: Title font size. Defaults to font_size + 2.
+      default: 0
+    line_width:
+      type: number
+      description: Line width for line/area/step charts. Default 2.
+      default: 2.0
+    marker:
+      type: string
+      description: >
+        Marker style for line/scatter: "o" (circle), "s" (square), "^" (triangle),
+        "D" (diamond), "x", "+", "*", "none". Default "none" for line.
+      default: "none"
+    alpha:
+      type: number
+      description: Global opacity 0.0–1.0 for fill/bars. Default 0.85.
+      default: 0.85
+    xscale:
+      type: string
+      enum: ["linear", "log", "symlog", "logit"]
+      description: X-axis scale. Default linear.
+      default: "linear"
+    yscale:
+      type: string
+      enum: ["linear", "log", "symlog", "logit"]
+      description: Y-axis scale. Default linear.
+      default: "linear"
+    xlim:
+      type: array
+      items:
+        type: number
+      description: X-axis limits as [min, max]. Omit to auto-scale.
+      default: []
+    ylim:
+      type: array
+      items:
+        type: number
+      description: Y-axis limits as [min, max]. Omit to auto-scale.
+      default: []
+    tight_layout:
+      type: boolean
+      description: Apply tight_layout to prevent label clipping. Default true.
+      default: true
+    background_color:
+      type: string
+      description: Figure background color. Default "white".
+      default: "white"
+    output_format:
+      type: string
+      enum: ["png", "svg"]
+      description: Output image format. Default "png".
+      default: "png"
+    custom_code:
+      type: string
+      description: >
+        Optional raw matplotlib Python code executed after the chart is drawn
+        but before saving. Use this for advanced customization: annotations,
+        twin axes, inset axes, custom tick formatters, etc.
+        Variables available: fig, ax, plt, np.
+        Example: 'ax.axhline(y=5, color="red", linestyle="--", label="Target")'
+      default: ""
+  required:
+    - chart_type
+    - data

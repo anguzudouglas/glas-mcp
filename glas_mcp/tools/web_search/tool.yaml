@@ -1,0 +1,15 @@
+name: web_search
+description: Searches the web for information using DuckDuckGo. Supports up to 250 results.
+input_schema:
+  type: object
+  properties:
+    query:
+      type: string
+      description: The search query.
+    num_results:
+      type: integer
+      description: Number of results to return (max 250).
+      default: 10
+      maximum: 250
+  required:
+    - query

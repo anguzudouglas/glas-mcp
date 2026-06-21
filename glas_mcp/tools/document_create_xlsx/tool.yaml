@@ -1,0 +1,36 @@
+name: document_create_xlsx
+description: >
+  Generates an XLSX spreadsheet from HTML tables using openpyxl.
+  Each <table> in the HTML becomes a separate worksheet. <caption> or the
+  nearest preceding heading is used as the sheet name. Headers from <thead>
+  are styled bold. Returns the file path and optional base64-encoded content.
+input_schema:
+  type: object
+  properties:
+    html_content:
+      type: string
+      description: >
+        HTML containing one or more <table> elements to convert to Excel sheets.
+        Each table becomes one worksheet. Use <caption> for the sheet name, or
+        precede the table with an <h1>–<h3> heading.
+    filename:
+      type: string
+      description: Output filename. Must end with .xlsx. Defaults to "spreadsheet.xlsx".
+      default: "spreadsheet.xlsx"
+    output_dir:
+      type: string
+      description: >
+        Directory to write the file into. Created if it does not exist.
+        Defaults to "./generated_docs/".
+      default: "./generated_docs/"
+    return_base64:
+      type: boolean
+      description: Include base64-encoded XLSX in the response. Defaults to true.
+      default: true
+    auto_column_width:
+      type: boolean
+      description: >
+        Automatically size columns to fit content. Defaults to true.
+      default: true
+  required:
+    - html_content

@@ -1,0 +1,5 @@
+name: web_fetch_skill
+tool: web_fetch
+version: "1.0.0"
+description: Guide the agent to fetch web content effectively, choosing the right mode and strategy for each site type
+tags: [web, scraping, fetch, content, bypass]

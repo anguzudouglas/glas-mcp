@@ -1,0 +1,5 @@
+name: docx_creation_skill
+tool: document_create_docx
+version: "1.0.0"
+description: Guide the agent to generate properly formatted DOCX files from HTML using python-docx
+tags: [docx, word, document, report, office]

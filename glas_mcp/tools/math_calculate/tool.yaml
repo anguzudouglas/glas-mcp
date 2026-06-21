@@ -1,0 +1,38 @@
+name: math_calculate
+description: >
+  Executes Python math code and returns the results.
+  Supports: math, cmath, statistics, decimal, fractions, numpy, scipy, sympy.
+  No ML libraries (no torch, tensorflow, sklearn).
+  All print() output is captured and returned. The last expression in the code
+  is also captured as "result" if it evaluates to a value.
+  Code runs in an isolated subprocess with a configurable timeout.
+
+input_schema:
+  type: object
+  properties:
+    code:
+      type: string
+      description: >
+        Python code to execute. Use print() to output results.
+        The final expression value is captured automatically.
+        Available libraries:
+          math, cmath, statistics, decimal, fractions, random (math only),
+          itertools, functools, operator,
+          numpy (as np), scipy, sympy (with all common symbols pre-imported).
+        Example:
+          import sympy as sp
+          x = sp.Symbol('x')
+          expr = sp.sin(x)**2 + sp.cos(x)**2
+          print(sp.simplify(expr))
+    timeout:
+      type: integer
+      description: >
+        Maximum execution time in seconds. Clamped to 1–60. Default 15.
+      default: 15
+    precision:
+      type: integer
+      description: >
+        Decimal precision for sympy / mpmath calculations. Default 50.
+      default: 50
+  required:
+    - code

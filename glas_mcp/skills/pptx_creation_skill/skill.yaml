@@ -1,0 +1,5 @@
+name: pptx_creation_skill
+tool: document_create_pptx
+version: "1.0.0"
+description: Guide the agent to generate PowerPoint presentations with slides, layouts, bullet points, and embedded charts
+tags: [pptx, powerpoint, presentation, slides, office]

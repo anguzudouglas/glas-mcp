@@ -1,0 +1,5 @@
+name: web_search_skill
+tool: web_search
+version: "1.0.0"
+description: Guide the agent to produce high-quality DuckDuckGo searches with optimal query construction and result filtering
+tags: [search, web, information, research]

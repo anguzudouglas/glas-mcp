@@ -1,0 +1,5 @@
+name: pdf_creation_skill
+tool: document_create_pdf
+version: "1.0.0"
+description: Guide the agent to generate pixel-perfect PDF documents from HTML with full CSS styling support
+tags: [pdf, document, html, css, report, export]

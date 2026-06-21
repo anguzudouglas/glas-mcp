@@ -1,0 +1,37 @@
+name: document_create_docx
+description: >
+  Generates a DOCX file from HTML content using python-docx and htmldocx.
+  Provide the full HTML markup; headings, paragraphs, lists, and tables are
+  converted into native Word document elements. Returns the file path and
+  optional base64-encoded content.
+input_schema:
+  type: object
+  properties:
+    html_content:
+      type: string
+      description: >
+        HTML to convert to DOCX. Supports: headings (h1-h6), paragraphs,
+        bold/italic/underline inline styles, ordered and unordered lists,
+        and tables. UTF-8 encoded.
+    title:
+      type: string
+      description: >
+        Optional document title added as a Word "Title" styled paragraph
+        at the top of the document before the HTML content.
+      default: ""
+    filename:
+      type: string
+      description: Output filename. Must end with .docx. Defaults to "document.docx".
+      default: "document.docx"
+    output_dir:
+      type: string
+      description: >
+        Directory to write the file into. Created if it does not exist.
+        Defaults to "./generated_docs/".
+      default: "./generated_docs/"
+    return_base64:
+      type: boolean
+      description: Include base64-encoded DOCX in the response. Defaults to true.
+      default: true
+  required:
+    - html_content

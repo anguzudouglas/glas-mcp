@@ -1,0 +1,259 @@
+import asyncio
+import base64
+import io
+import os
+from typing import Any, Dict, List, Optional, Tuple
+
+from glas_mcp.tools.base import BaseTool
+
+# Slide layout indices
+_LAYOUT_TITLE      = 0
+_LAYOUT_TITLE_BODY = 1
+_LAYOUT_BLANK      = 6
+
+
+class DocumentCreatePptxTool(BaseTool):
+    """
+    MCP tool that converts HTML content into a PPTX presentation.
+    Each <section> (or top-level heading boundary) becomes a slide.
+    """
+
+    async def execute(self, arguments: Dict[str, Any]) -> Any:
+        from pptx.dml.color import RGBColor
+        from glas_mcp.tools.document_create_pptx.helpers.html_parser import parse_slides
+        # ── Input validation ────────────────────────────────────────────────
+        if not isinstance(arguments, dict):
+            return {"error": "Arguments must be a JSON object."}
+
+        html_content: str = arguments.get("html_content", "")
+        if not isinstance(html_content, str) or not html_content.strip():
+            return {"error": "'html_content' is required and must be a non-empty string."}
+
+        presentation_title: str = str(arguments.get("presentation_title", "")).strip()
+        filename: str = str(arguments.get("filename", "presentation.pptx")).strip()
+        output_dir: str = str(arguments.get("output_dir", "./generated_docs/")).strip()
+        return_base64: bool = bool(arguments.get("return_base64", True))
+        theme_color: str = str(arguments.get("theme_color", "1a1a2e")).strip().lstrip("#")
+
+        if not filename:
+            filename = "presentation.pptx"
+        if not filename.lower().endswith(".pptx"):
+            filename += ".pptx"
+
+        if not output_dir:
+            output_dir = "./generated_docs/"
+
+        try:
+            accent = RGBColor.from_string(theme_color.upper().zfill(6))
+        except Exception:
+            accent = RGBColor(0x1A, 0x1A, 0x2E)
+
+        # ── Parse HTML into slide data ──────────────────────────────────────
+        try:
+            slides_data = parse_slides(html_content)
+        except Exception as exc:
+            return {"error": f"HTML parsing failed: {exc}"}
+
+        if not slides_data:
+            return {
+                "error": (
+                    "No slide content found in html_content. "
+                    "Use <section> tags for individual slides, or structure "
+                    "content with <h1>/<h2> headings."
+                )
+            }
+
+        # ── Create output directory ─────────────────────────────────────────
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+        except OSError as exc:
+            return {"error": f"Cannot create output directory '{output_dir}': {exc}"}
+
+        output_path = os.path.join(output_dir, filename)
+
+        # ── Build presentation ──────────────────────────────────────────────
+        try:
+            pptx_bytes = await asyncio.to_thread(
+                self._build_pptx, slides_data, presentation_title, accent
+            )
+        except Exception as exc:
+            return {
+                "error": f"PPTX generation failed: {exc}",
+                "hint": (
+                    "Ensure html_content uses <section> tags or <h1>/<h2> "
+                    "headings to delimit slides. Bullets come from <ul>/<ol>, "
+                    "body text from <p>, tables from <table>."
+                ),
+            }
+
+        # ── Write to disk ───────────────────────────────────────────────────
+        try:
+            with open(output_path, "wb") as fh:
+                fh.write(pptx_bytes)
+        except OSError as exc:
+            return {"error": f"Cannot write PPTX to '{output_path}': {exc}"}
+
+        result: Dict[str, Any] = {
+            "success": True,
+            "file_path": os.path.abspath(output_path),
+            "filename": filename,
+            "size_bytes": len(pptx_bytes),
+            "slide_count": len(slides_data) + (1 if presentation_title else 0),
+        }
+        if return_base64:
+            result["base64"] = base64.b64encode(pptx_bytes).decode("utf-8")
+
+        return result
+
+    # ── Private helpers ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def _build_pptx(
+        slides_data: List[Dict[str, Any]],
+        presentation_title: str,
+        accent: Any,
+    ) -> bytes:
+        from pptx import Presentation
+        from pptx.util import Inches, Pt
+        from pptx.enum.text import PP_ALIGN
+        slide_w = Inches(10)
+        slide_h = Inches(5.625)
+        prs = Presentation()
+        prs.slide_width  = slide_w
+        prs.slide_height = slide_h
+
+        layouts = prs.slide_layouts
+
+        # ── Cover / title slide ─────────────────────────────────────────────
+        if presentation_title:
+            slide = prs.slides.add_slide(layouts[_LAYOUT_TITLE])
+            _set_placeholder_text(slide, 0, presentation_title, size=Pt(36), bold=True, color=accent)
+            _set_placeholder_text(slide, 1, "Generated by Glas MCP", size=Pt(18))
+
+        # ── Content slides ──────────────────────────────────────────────────
+        for data in slides_data:
+            title    = data.get("title", "")
+            bullets  = data.get("bullets", [])
+            body     = data.get("body", "")
+            table    = data.get("table")
+
+            slide = prs.slides.add_slide(layouts[_LAYOUT_TITLE_BODY])
+
+            # Title
+            _set_placeholder_text(slide, 0, title, size=Pt(28), bold=True, color=accent)
+
+            # Body placeholder — bullets take priority over plain body text
+            content_lines: List[str] = []
+            if bullets:
+                content_lines = bullets
+            elif body:
+                content_lines = body.splitlines()
+
+            body_ph = _get_placeholder(slide, 1)
+            if body_ph is not None and content_lines:
+                tf = body_ph.text_frame
+                tf.clear()
+                for i, line in enumerate(content_lines):
+                    if i == 0:
+                        para = tf.paragraphs[0]
+                    else:
+                        para = tf.add_paragraph()
+                    para.text = line
+                    para.font.size = Pt(18)
+                    if bullets:
+                        para.level = 0
+
+            # Table (appended below body text using absolute positioning)
+            if table and table.get("rows"):
+                _add_table_to_slide(prs, slide, table)
+
+        buf = io.BytesIO()
+        prs.save(buf)
+        return buf.getvalue()
+
+
+# ── Slide utility functions ─────────────────────────────────────────────────
+
+def _get_placeholder(slide, idx: int):
+    try:
+        return slide.placeholders[idx]
+    except (KeyError, IndexError):
+        return None
+
+
+def _set_placeholder_text(
+    slide,
+    idx: int,
+    text: str,
+    size=None,
+    bold: bool = False,
+    color=None,
+) -> None:
+    ph = _get_placeholder(slide, idx)
+    if ph is None:
+        return
+    tf = ph.text_frame
+    tf.clear()
+    para = tf.paragraphs[0]
+    run = para.add_run()
+    run.text = text or ""
+    if size:
+        run.font.size = size
+    if bold:
+        run.font.bold = True
+    if color:
+        run.font.color.rgb = color
+
+
+def _add_table_to_slide(prs, slide, table_data: Dict[str, Any]) -> None:
+    from pptx.util import Inches
+    from pptx.dml.color import RGBColor
+    _margin  = Inches(0.6)
+    _slide_w = Inches(10)
+    headers: List[str] = table_data.get("headers", [])
+    rows: List[List[str]] = table_data.get("rows", [])
+
+    if not rows:
+        return
+
+    num_cols = max(
+        len(headers),
+        max((len(r) for r in rows), default=0),
+    )
+    if num_cols == 0:
+        return
+
+    num_rows = len(rows) + (1 if headers else 0)
+
+    left   = _margin
+    top    = Inches(4.2)
+    width  = _slide_w - 2 * _margin
+    height = Inches(0.35) * num_rows
+
+    tbl = slide.shapes.add_table(num_rows, num_cols, left, top, width, height).table
+
+    accent = RGBColor(0x1A, 0x1A, 0x2E)
+    row_offset = 0
+
+    if headers:
+        for col_idx, header in enumerate(headers):
+            cell = tbl.cell(0, col_idx)
+            cell.text = header
+            para = cell.text_frame.paragraphs[0]
+            run = para.add_run() if not para.runs else para.runs[0]
+            run.font.bold = True
+            run.font.size = Pt(12)
+            run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = accent
+        row_offset = 1
+
+    for r_idx, row in enumerate(rows):
+        for c_idx, value in enumerate(row):
+            if c_idx >= num_cols:
+                break
+            cell = tbl.cell(r_idx + row_offset, c_idx)
+            cell.text = str(value)
+            para = cell.text_frame.paragraphs[0]
+            run = para.add_run() if not para.runs else para.runs[0]
+            run.font.size = Pt(11)

@@ -1,0 +1,45 @@
+name: document_create_pptx
+description: >
+  Generates a PowerPoint PPTX presentation from HTML content using python-pptx.
+  Each <section> (or top-level <h1>/<h2>) in the HTML becomes a slide.
+  Bullet points come from <ul>/<ol>, body text from <p>, and tables from
+  <table>. Returns the file path and optional base64-encoded content.
+input_schema:
+  type: object
+  properties:
+    html_content:
+      type: string
+      description: >
+        HTML describing the presentation. Structure it using <section> tags
+        for slides (recommended), or use <h1>/<h2> headings as slide
+        boundaries. Within each slide: <h1>/<h2> = slide title, <p> = body
+        text, <ul>/<ol> = bullet list, <table> = data table.
+    presentation_title:
+      type: string
+      description: >
+        Title slide text shown on the first slide. If omitted the first
+        <h1> in the HTML is used; if neither is present no title slide
+        is added.
+      default: ""
+    filename:
+      type: string
+      description: Output filename. Must end with .pptx. Defaults to "presentation.pptx".
+      default: "presentation.pptx"
+    output_dir:
+      type: string
+      description: >
+        Directory to write the file into. Created if it does not exist.
+        Defaults to "./generated_docs/".
+      default: "./generated_docs/"
+    return_base64:
+      type: boolean
+      description: Include base64-encoded PPTX in the response. Defaults to true.
+      default: true
+    theme_color:
+      type: string
+      description: >
+        Hex colour (without #) used for slide title text and accents.
+        Defaults to "1a1a2e" (dark navy).
+      default: "1a1a2e"
+  required:
+    - html_content

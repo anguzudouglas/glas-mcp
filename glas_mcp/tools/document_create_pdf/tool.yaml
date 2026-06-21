@@ -1,0 +1,39 @@
+name: document_create_pdf
+description: >
+  Generates a PDF from HTML and CSS using WeasyPrint.
+  Provide the full HTML markup and optional CSS styles; the tool renders them
+  into a PDF file and returns the file path and base64-encoded content.
+input_schema:
+  type: object
+  properties:
+    html_content:
+      type: string
+      description: >
+        Full HTML document or HTML fragment to render as a PDF.
+        May include inline <style> tags. UTF-8 encoded.
+    css:
+      type: string
+      description: >
+        Optional additional CSS to apply on top of the HTML's own styles.
+        Injected as a <style> block before rendering.
+      default: ""
+    filename:
+      type: string
+      description: >
+        Output filename (without path). Defaults to "document.pdf".
+        Must end with .pdf.
+      default: "document.pdf"
+    output_dir:
+      type: string
+      description: >
+        Directory to write the PDF into. Defaults to "./generated_pdfs/".
+        The directory is created if it does not exist.
+      default: "./generated_pdfs/"
+    return_base64:
+      type: boolean
+      description: >
+        If true, the response includes the PDF as a base64-encoded string
+        in addition to the file path. Defaults to true.
+      default: true
+  required:
+    - html_content

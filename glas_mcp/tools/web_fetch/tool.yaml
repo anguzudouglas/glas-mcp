@@ -1,0 +1,74 @@
+name: web_fetch
+description: >
+  Fetches any URL and returns its content as clean Markdown, extracted links,
+  and page metadata — no browser required.
+
+  Works on JS-heavy SPAs and bot-protected sites by cycling through multiple
+  bypass strategies automatically:
+    • Chrome TLS fingerprint + full Sec-* header stack
+    • Session warm-up (loads homepage first, then the target)
+    • Referer spoofing (appears to arrive from a Google search result)
+    • HTTP/2 via httpx
+    • CloudScraper (Cloudflare bypass)
+    • Mobile User-Agent rotation
+    • Embedded JSON extraction (Next.js __NEXT_DATA__, Nuxt, Redux, Apollo, …)
+    • API endpoint auto-discovery (scans JS bundles, calls live endpoints)
+    • Cache fallback: Google Cache → Bing Cache → Google AMP → Wayback Machine
+
+  mode="auto" (default) tries standard HTTP first and falls back to JS bypass
+  strategies only when needed. mode="js" skips straight to bypass strategies.
+  mode="cache" only consults archived copies.
+
+input_schema:
+  type: object
+  properties:
+    url:
+      type: string
+      description: >
+        URL to fetch. An https:// prefix is added automatically when missing.
+    mode:
+      type: string
+      enum: ["auto", "standard", "js", "cache"]
+      description: >
+        auto     — standard HTTP first; JS bypass if page is a SPA shell or
+                   returns 403 / 429 / 503 (default).
+        standard — plain HTTP only, fastest; no bypass tricks.
+        js       — jump straight to JS bypass strategies; use for known SPAs
+                   or Cloudflare-protected sites.
+        cache    — only try Google Cache, Bing Cache, AMP, and Wayback Machine;
+                   useful when the live site is unavailable.
+      default: "auto"
+    strategy:
+      type: string
+      description: >
+        Preferred JS strategy when mode is "js" or "auto".
+        One of: smart_headers, session_warmup, referer_bypass, tls_ciphers,
+        http2, cloudscraper, mobile_bypass, embedded_json, api_discovery,
+        cache_fallback.
+        Defaults to "auto" (tries all available strategies in order).
+      default: "auto"
+    timeout:
+      type: integer
+      description: Per-request timeout in seconds. Default 30.
+      default: 30
+    proxy:
+      type: string
+      description: >
+        Optional HTTP/HTTPS proxy (e.g. "http://user:pass@host:port").
+        Applied to all requests including cache sources.
+      default: ""
+    include_links:
+      type: boolean
+      description: >
+        Include the extracted hyperlink list in the response.
+        Disable to keep the response smaller when links are not needed.
+        Default true.
+      default: true
+    include_raw_html:
+      type: boolean
+      description: >
+        Include the raw HTML in the response. Usually not needed — the
+        markdown field contains all readable content. Default false.
+      default: false
+  required:
+    - url
