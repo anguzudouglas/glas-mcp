@@ -5,9 +5,9 @@
 # Build:   docker build -t glas-mcp .
 # Run:     docker run -p 8000:8000 --env-file .env glas-mcp
 # Compose: docker-compose up
-# ─────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────[...]
 
-# ── Stage 1: Builder ───────────────────────────────────────────────────────────
+# ── Stage 1: Builder ──────────────────────────────────────────────────────────[...]
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-xlib-2.0-0 \
     libxml2 \
     libxslt1.1 \
     fonts-liberation \
@@ -33,7 +33,7 @@ COPY glas_mcp/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# ── Stage 2: Runtime ───────────────────────────────────────────────────────────
+# ── Stage 2: Runtime ──────────────────────────────────────────────────────────[...]
 FROM python:3.11-slim AS runtime
 
 LABEL org.opencontainers.image.title="Glas MCP"
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-xlib-2.0-0 \
     libxml2 \
     libxslt1.1 \
     fonts-liberation \
