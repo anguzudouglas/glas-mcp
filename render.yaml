@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: glas-mcp
+    env: docker
+    repo: https://github.com/anguzudouglas/glas-mcp
+    branch: main
+    dockerfilePath: Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DEV
+        value: "false"
+      - key: HOST
+        value: "0.0.0.0"
