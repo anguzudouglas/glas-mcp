@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glas MCP — Model Context Protocol Server</title>
+<meta name="description" content="Open-source MCP server giving AI agents tools for web search, math, charts, and document generation.">
+<style>
+:root {
+  --bg:       #0a0e1a;
+  --bg2:      #111827;
+  --bg3:      #1e2a3a;
+  --border:   #1e3a5f;
+  --accent:   #00c8f8;
+  --accent2:  #003f5c;
+  --accent3:  #7c3aed;
+  --text:     #e2e8f0;
+  --text2:    #94a3b8;
+  --text3:    #64748b;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --yellow:   #f59e0b;
+  --radius:   10px;
+  --shadow:   0 4px 24px rgba(0,0,0,0.5);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.875em;background:var(--bg3);padding:2px 6px;border-radius:4px;color:#7dd3fc}
+pre{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;overflow-x:auto;font-size:0.825em;line-height:1.7}
+pre code{background:none;padding:0;color:#e2e8f0}
+h1,h2,h3,h4{font-weight:700;line-height:1.3}
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+img{max-width:100%}
+
+/* ── Nav ── */
+nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(10,14,26,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 24px}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:58px;gap:16px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.1rem;color:var(--text)}
+.nav-logo svg{flex-shrink:0}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap}
+.nav-links a{padding:6px 12px;border-radius:6px;font-size:0.875rem;color:var(--text2);transition:all .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--accent);background:rgba(0,200,248,0.08);text-decoration:none}
+.nav-badge{background:var(--accent2);color:var(--accent);padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700;letter-spacing:0.05em}
+
+/* ── Layout ── */
+.page{padding-top:58px}
+section{padding:80px 24px}
+.container{max-width:1200px;margin:0 auto}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}.nav-links{display:none}}
+
+/* ── Hero ── */
+#hero{min-height:92vh;display:flex;align-items:center;background:radial-gradient(ellipse at 60% 40%,rgba(0,63,92,0.35) 0%,transparent 70%),var(--bg);position:relative;overflow:hidden}
+#hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23003f5c' fill-opacity='0.12'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-inner{position:relative;z-index:1;max-width:1200px;margin:0 auto;width:100%;padding:0}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(0,200,248,0.1);border:1px solid rgba(0,200,248,0.25);color:var(--accent);padding:5px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;letter-spacing:0.08em;margin-bottom:24px}
+.hero-tag::before{content:'●';font-size:0.5rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+h1.hero-title{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff 30%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.2rem;color:var(--text2);max-width:600px;margin-bottom:36px;line-height:1.7}
+.hero-btns{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:56px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);font-weight:600;font-size:0.9rem;cursor:pointer;border:none;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#33d4ff;transform:translateY(-1px);text-decoration:none}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.btn-sm{padding:7px 14px;font-size:0.8rem}
+.hero-stats{display:flex;gap:40px;flex-wrap:wrap}
+.stat{text-align:left}
+.stat-num{font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+.stat-lbl{font-size:0.8rem;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:0.08em}
+.hero-code{margin-top:48px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-width:680px}
+.hero-code-tab{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:0.8rem;color:var(--text3)}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot-r{background:#ef4444}.dot-y{background:#f59e0b}.dot-g{background:#22c55e}
+
+/* ── Cards ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card-icon{font-size:1.8rem;margin-bottom:12px}
+.card-title{font-size:1rem;font-weight:700;margin-bottom:8px}
+.card-desc{font-size:0.875rem;color:var(--text2);line-height:1.6}
+.tag{display:inline-block;background:rgba(0,200,248,0.1);color:var(--accent);padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;margin:2px}
+.tag-purple{background:rgba(124,58,237,0.15);color:#a78bfa}
+.tag-green{background:rgba(34,197,94,0.1);color:#4ade80}
+
+/* ── Section headers ── */
+.section-label{font-size:0.75rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.section-title{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:16px}
+.section-sub{font-size:1rem;color:var(--text2);max-width:600px;margin-bottom:48px;line-height:1.7}
+
+/* ── Tool cards ── */
+.tool-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s}
+.tool-card:hover{border-color:var(--accent)}
+.tool-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;cursor:pointer;user-select:none}
+.tool-header-left{display:flex;align-items:center;gap:14px}
+.tool-name-badge{font-family:monospace;font-size:0.85rem;background:var(--bg3);border:1px solid var(--border);color:var(--accent);padding:4px 10px;border-radius:6px;font-weight:600}
+.tool-desc-short{font-size:0.8rem;color:var(--text2);margin-top:2px;max-width:400px}
+.tool-chevron{color:var(--text3);transition:transform .2s;font-size:1.2rem}
+.tool-card.open .tool-chevron{transform:rotate(180deg)}
+.tool-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.tool-card.open .tool-body{display:block}
+.tool-body pre{margin-top:12px;font-size:0.775rem}
+.param-table{width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:12px}
+.param-table th{text-align:left;padding:8px 10px;background:var(--bg3);color:var(--text3);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em}
+.param-table td{padding:8px 10px;border-bottom:1px solid var(--bg3);vertical-align:top}
+.param-table td:first-child{font-family:monospace;color:#7dd3fc;font-size:0.82rem}
+.param-req{color:var(--red);font-size:0.7rem;font-weight:700}
+
+/* ── API Reference ── */
+.endpoint{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.endpoint-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer}
+.method{font-family:monospace;font-weight:700;padding:3px 8px;border-radius:5px;font-size:0.75rem;min-width:48px;text-align:center}
+.method-get{background:rgba(34,197,94,0.15);color:#4ade80}
+.method-post{background:rgba(0,200,248,0.12);color:var(--accent)}
+.method-put{background:rgba(245,158,11,0.12);color:#fbbf24}
+.method-delete{background:rgba(239,68,68,0.12);color:#f87171}
+.endpoint-path{font-family:monospace;font-size:0.875rem;color:var(--text)}
+.endpoint-body{display:none;padding:0 18px 18px;border-top:1px solid var(--bg3)}
+.endpoint.open .endpoint-body{display:block}
+
+/* ── Skills panel ── */
+.skill-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;display:flex;align-items:flex-start;gap:14px}
+.skill-toggle{width:40px;height:22px;background:var(--bg3);border-radius:11px;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;border:none}
+.skill-toggle.on{background:var(--accent)}
+.skill-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:white;border-radius:50%;transition:left .2s}
+.skill-toggle.on::after{left:21px}
+.skill-info{flex:1;min-width:0}
+.skill-name{font-family:monospace;font-size:0.85rem;color:var(--accent);font-weight:600}
+.skill-tool{font-size:0.75rem;color:var(--text3);margin-top:2px}
+.skill-desc{font-size:0.8rem;color:var(--text2);margin-top:4px}
+.skill-actions{display:flex;gap:8px;margin-top:10px}
+.skill-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.skill-modal.open{display:flex}
+.skill-modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:min(600px,92vw);max-height:85vh;overflow-y:auto}
+
+/* ── Playground ── */
+#playground-section{background:var(--bg2);border-top:1px solid var(--border)}
+.playground{display:grid;grid-template-columns:300px 1fr;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;min-height:600px}
+@media(max-width:900px){.playground{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.pg-sidebar{background:var(--bg3);border-right:1px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:20px}
+.pg-sidebar h4{font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);font-weight:700;margin-bottom:8px}
+.pg-main{display:flex;flex-direction:column;flex:1}
+.pg-messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;max-height:520px}
+.msg{padding:12px 16px;border-radius:12px;max-width:85%;font-size:0.875rem;line-height:1.6}
+.msg-user{background:var(--accent2);color:white;align-self:flex-end;border-bottom-right-radius:4px}
+.msg-assistant{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;white-space:pre-wrap}
+.msg-tool{background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.3);align-self:flex-start;border-radius:8px;font-family:monospace;font-size:0.78rem;width:100%;max-width:100%}
+.msg-tool-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid rgba(124,58,237,0.2);font-weight:700;color:#a78bfa}
+.msg-tool-body{padding:8px 12px;max-height:200px;overflow-y:auto;white-space:pre-wrap;color:var(--text2)}
+.msg-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#fca5a5;align-self:flex-start;font-size:0.82rem}
+.msg-thinking{background:var(--bg3);border:1px solid var(--border);align-self:flex-start;color:var(--text3);font-size:0.82rem;display:flex;align-items:center;gap:8px}
+.dots span{animation:dot-blink 1.4s infinite both}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot-blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.pg-input-bar{padding:16px;border-top:1px solid var(--border);display:flex;gap:10px}
+.pg-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:0.875rem;resize:none;font-family:inherit;min-height:44px;max-height:120px}
+.pg-input:focus{outline:none;border-color:var(--accent)}
+.pg-send{background:var(--accent);color:#000;border:none;border-radius:8px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:0.875rem;transition:background .2s;white-space:nowrap}
+.pg-send:hover{background:#33d4ff}
+.pg-send:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+select,input[type=text],input[type=password],textarea{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.875rem;width:100%;font-family:inherit}
+select:focus,input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+label{display:block;font-size:0.78rem;color:var(--text3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.tool-toggle-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto}
+.tool-toggle-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--bg2);border-radius:6px;font-size:0.8rem}
+.tool-toggle-item span{color:var(--text2);font-family:monospace;font-size:0.78rem}
+.pg-clear{background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:6px;padding:6px 12px;font-size:0.78rem;cursor:pointer;width:100%;transition:all .2s}
+.pg-clear:hover{border-color:var(--red);color:var(--red)}
+
+/* ── Footer ── */
+footer{background:var(--bg2);border-top:1px solid var(--border);padding:40px 24px;text-align:center;color:var(--text3);font-size:0.85rem}
+footer a{color:var(--text2)}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-links{display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border)}
+
+/* ── Utilities ── */
+.flex{display:flex}.gap8{gap:8px}.gap16{gap:16px}.gap24{gap:24px}.items-center{align-items:center}.justify-between{justify-content:space-between}.flex-wrap{flex-wrap:wrap}.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}.mb8{margin-bottom:8px}.mb16{margin-bottom:16px}.text-sm{font-size:0.875rem}.text-xs{font-size:0.78rem}.text-muted{color:var(--text2)}.text-dim{color:var(--text3)}.text-accent{color:var(--accent)}.text-green{color:var(--green)}.text-red{color:var(--red)}.font-mono{font-family:monospace}.fw700{font-weight:700}.w100{width:100%}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:700}
+.badge-blue{background:rgba(0,200,248,0.12);color:var(--accent);padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:700}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.notify{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 20px;font-size:0.875rem;z-index:500;animation:slide-in .3s ease;box-shadow:var(--shadow)}
+.notify.success{border-color:var(--green);color:var(--green)}
+.notify.error{border-color:var(--red);color:var(--red)}
+@keyframes slide-in{from{transform:translateX(100%);opacity:0}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ──────────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#hero" style="text-decoration:none">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="7" fill="#003f5c"/>
+        <path d="M7 14C7 10.134 10.134 7 14 7V21C10.134 21 7 17.866 7 14Z" fill="#00c8f8"/>
+        <path d="M14 7C17.866 7 21 10.134 21 14C21 17.866 17.866 21 14 21V7Z" fill="#2f4b7c"/>
+        <circle cx="14" cy="14" r="2.5" fill="white"/>
+      </svg>
+      Glas MCP
+      <span class="nav-badge">v1.0</span>
+    </a>
+    <div class="nav-links">
+      <a href="#tools">Tools</a>
+      <a href="#api">API</a>
+      <a href="#skills">Skills</a>
+      <a href="#playground">Playground</a>
+      <a href="https://github.com/anguzudouglas/glas_mcp" target="_blank">GitHub ↗</a>
+    </div>
+    <div id="server-status" class="badge-green" style="font-size:0.7rem;flex-shrink:0">● Connecting…</div>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ── Hero ───────────────────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Open Source · MIT License · github.com/anguzudouglas/glas_mcp</div>
+    <h1 class="hero-title">Give your AI agent<br>superpowers.</h1>
+    <p class="hero-sub">
+      Glas MCP is a modular <strong>Model Context Protocol</strong> server exposing 8 production-ready tools
+      over SSE and REST — web search, web fetch, math, charts, and document generation.
+      Plug into any MCP client in 30 seconds.
+    </p>
+    <div class="hero-btns">
+      <a href="#playground" class="btn btn-primary">▶ Try Playground</a>
+      <a href="#api" class="btn btn-outline">API Reference</a>
+      <a href="https://github.com/anguzudouglas/glas_mcp" target="_blank" class="btn btn-outline">GitHub ↗</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num" id="stat-tools">8</div><div class="stat-lbl">Tools</div></div>
+      <div class="stat"><div class="stat-num" id="stat-skills">8</div><div class="stat-lbl">Skills</div></div>
+      <div class="stat"><div class="stat-num">SSE</div><div class="stat-lbl">MCP Transport</div></div>
+      <div class="stat"><div class="stat-num">REST</div><div class="stat-lbl">Any App</div></div>
+      <div class="stat"><div class="stat-num">Docker</div><div class="stat-lbl">Ready</div></div>
+    </div>
+    <div class="hero-code mt24">
+      <div class="hero-code-tab"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:8px">Connect Claude Desktop → Glas MCP</span></div>
+      <pre style="margin:0;border:none;border-radius:0"><code><span style="color:#64748b">// ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+{
+  <span style="color:#7dd3fc">"mcpServers"</span>: {
+    <span style="color:#7dd3fc">"glas"</span>: {
+      <span style="color:#7dd3fc">"url"</span>: <span style="color:#86efac">"https://glas-mcp.onrender.com/sse"</span>
+    }
+  }
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tools ───────────────────────────────────────────────────────────────── -->
+<section id="tools" style="background:var(--bg2);border-top:1px solid var(--border)">
+  <div class="container">
+    <div class="section-label">Available Tools</div>
+    <h2 class="section-title">8 tools. Zero configuration.</h2>
+    <p class="section-sub">Every tool is auto-discovered, self-describing, and callable over MCP or REST. Click any card to see the full schema and parameters.</p>
+    <div id="tools-list" style="display:flex;flex-direction:column;gap:10px">
+      <!-- Populated by JS -->
+      <div class="text-muted text-sm flex gap8 items-center"><span class="spinner"></span>Loading tools from server…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── API Reference ───────────────────────────────────────────────────────── -->
+<section id="api">
+  <div class="container">
+    <div class="section-label">API Reference</div>
+    <h2 class="section-title">Plug &amp; play from anywhere.</h2>
+    <p class="section-sub">Every endpoint returns the Glas Unified Response Schema (GURS). All responses include <code>ok</code>, <code>result</code>, <code>error</code>, and <code>meta</code>.</p>
+
+    <div class="grid2" style="margin-bottom:40px">
+      <div class="card">
+        <div class="card-title text-accent" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em">Base URL (Production)</div>
+        <code style="font-size:0.95rem;display:block;margin-top:8px">https://glas-mcp.onrender.com</code>
+      </div>
+      <div class="card">
+        <div class="card-title text-accent" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em">Response Schema (GURS)</div>
+        <code style="font-size:0.8rem;display:block;margin-top:8px">{ ok, tool, result, error, meta }</code>
+      </div>
+    </div>
+
+    <div id="endpoints">
+      <!-- Endpoints rendered by JS -->
+    </div>
+
+    <div style="margin-top:40px">
+      <h3 style="margin-bottom:20px">Quick Start — JavaScript</h3>
+      <pre><code>const BASE = "https://glas-mcp.onrender.com/api/v1";
+
+async function callTool(name, args) {
+  const res = await fetch(`${BASE}/tools/${name}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ arguments: args }),
+  });
+  const { ok, result, error } = await res.json();
+  if (!ok) throw new Error(error.message);
+  return result;
+}
+
+<span style="color:#94a3b8">// Web search</span>
+const r = await callTool("web_search", { query: "MCP tools", num_results: 5 });
+
+<span style="color:#94a3b8">// Generate a chart → get base64 PNG</span>
+const chart = await callTool("plot_chart", {
+  chart_type: "bar",
+  data: { categories:["Q1","Q2","Q3"], values:[[100,145,130]], labels:["Revenue"] },
+  title: "Quarterly Revenue", colors: ["#00c8f8"], style: "ggplot"
+});
+img.src = `data:image/png;base64,${chart.image_base64}`;</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Skills ──────────────────────────────────────────────────────────────── -->
+<section id="skills" style="background:var(--bg2);border-top:1px solid var(--border)">
+  <div class="container">
+    <div class="section-label">Skills</div>
+    <h2 class="section-title">Agent guidance, built in.</h2>
+    <p class="section-sub">Skills are markdown guides that tell the agent <em>how</em> to use each tool effectively — query patterns, data structures, quality rules. Toggle them, edit them, or add your own.</p>
+
+    <div class="flex justify-between items-center mb16" style="flex-wrap:wrap;gap:12px">
+      <div class="text-sm text-muted" id="skills-count">Loading…</div>
+      <div class="flex gap8">
+        <button class="btn btn-sm btn-outline" onclick="showAddSkillModal()">+ Add Skill</button>
+        <button class="btn btn-sm btn-outline" onclick="copyAgentHint()">Copy Agent Hint</button>
+      </div>
+    </div>
+
+    <div id="skills-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">
+      <div class="text-muted text-sm flex gap8 items-center"><span class="spinner"></span>Loading skills…</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Playground ──────────────────────────────────────────────────────────── -->
+<section id="playground-section">
+  <div class="container">
+    <div class="section-label">Live Playground</div>
+    <h2 class="section-title">Chat with Glas Agent.</h2>
+    <p class="section-sub">Use your own API key — no signup. The agent connects to this server's tools in real time. Works with OpenRouter, Groq, and Gemini.</p>
+
+    <div class="playground" id="playground">
+      <!-- Sidebar -->
+      <div class="pg-sidebar">
+        <div>
+          <h4>Provider</h4>
+          <div class="form-group">
+            <select id="pg-provider" onchange="onProviderChange()">
+              <option value="openrouter">OpenRouter</option>
+              <option value="groq">Groq</option>
+              <option value="gemini">Gemini</option>
+            </select>
+          </div>
+          <div class="form-group mt8">
+            <label for="pg-model">Model</label>
+            <select id="pg-model"></select>
+          </div>
+          <div class="form-group mt8">
+            <label for="pg-apikey">API Key</label>
+            <input type="password" id="pg-apikey" placeholder="sk-or-…" autocomplete="off">
+          </div>
+        </div>
+
+        <div>
+          <h4>Active Tools</h4>
+          <div id="pg-tool-list" class="tool-toggle-list">
+            <div class="text-xs text-dim">Loading…</div>
+          </div>
+        </div>
+
+        <div>
+          <h4>Active Skills</h4>
+          <div id="pg-skill-list" class="tool-toggle-list">
+            <div class="text-xs text-dim">Loading…</div>
+          </div>
+        </div>
+
+        <div style="margin-top:auto">
+          <div class="text-xs text-dim mb8">Conversation turns: <span id="pg-turn-count">0</span></div>
+          <button class="pg-clear" onclick="clearChat()">🗑 Clear Chat</button>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <div class="pg-main">
+        <div id="pg-messages" class="pg-messages">
+          <div class="msg msg-assistant">
+            👋 Hi! I'm Glas Agent. Connect your API key on the left to start.
+            I have access to web search, web fetch, math calculation, chart generation,
+            and document creation tools. What would you like to build?
+          </div>
+        </div>
+        <div class="pg-input-bar">
+          <textarea class="pg-input" id="pg-input" rows="1" placeholder="Ask anything… (Shift+Enter for new line)"
+            onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="pg-send" id="pg-send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── About ───────────────────────────────────────────────────────────────── -->
+<section id="about">
+  <div class="container">
+    <div class="section-label">About</div>
+    <h2 class="section-title">Built by Anguzudouglas.</h2>
+    <div class="grid2">
+      <div>
+        <p class="text-muted" style="line-height:1.9;margin-bottom:20px">
+          Glas MCP is an open-source, modular Model Context Protocol server. 
+          Tools are auto-discovered from subdirectories — add a folder with 
+          <code>main.py</code> + <code>tool.yaml</code> and it's live on next restart.
+          Skills guide the agent to produce better outputs from each tool.
+        </p>
+        <div class="flex gap8 flex-wrap">
+          <a href="https://github.com/anguzudouglas/glas_mcp" target="_blank" class="btn btn-sm btn-outline">GitHub ↗</a>
+          <a href="https://glas-mcp.onrender.com" target="_blank" class="btn btn-sm btn-outline">Production ↗</a>
+          <a href="/api/docs" target="_blank" class="btn btn-sm btn-outline">Swagger UI ↗</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title mb16">Quick deploy with Docker</div>
+        <pre style="margin:0;font-size:0.78rem"><code>git clone https://github.com/anguzudouglas/glas_mcp
+cd glas_mcp
+cp .env.example .env
+
+<span style="color:#94a3b8"># Single container</span>
+docker build -t glas-mcp .
+docker run -p 8000:8000 glas-mcp
+
+<span style="color:#94a3b8"># Or with compose</span>
+docker-compose up</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-links">
+      <a href="https://github.com/anguzudouglas/glas_mcp">GitHub</a>
+      <a href="/api/docs">API Docs</a>
+      <a href="/api/v1/tools">Tools JSON</a>
+      <a href="/api/v1/skills">Skills JSON</a>
+      <a href="/api/v1/health">Health</a>
+    </div>
+    <div>Built by <strong>Anguzudouglas</strong> · MIT License · Hosted on <a href="https://glas-mcp.onrender.com">Render</a></div>
+  </div>
+</footer>
+
+<!-- ── Add Skill Modal ─────────────────────────────────────────────────────── -->
+<div class="skill-modal" id="add-skill-modal">
+  <div class="skill-modal-box">
+    <h3 style="margin-bottom:20px">Add New Skill</h3>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-group"><label>Skill Name (no spaces)</label><input type="text" id="new-skill-name" placeholder="my_custom_skill"></div>
+      <div class="form-group"><label>Target Tool</label><select id="new-skill-tool"><option value="">— select tool —</option></select></div>
+      <div class="form-group"><label>Description</label><input type="text" id="new-skill-desc" placeholder="Short description for agent hints"></div>
+      <div class="form-group"><label>Tags (comma-separated)</label><input type="text" id="new-skill-tags" placeholder="search, web, retrieval"></div>
+      <div class="form-group"><label>Skill Content (Markdown)</label><textarea id="new-skill-md" rows="10" placeholder="# Skill: my_custom_skill&#10;&#10;## When to Use&#10;...&#10;&#10;## Rules&#10;1. Always..."></textarea></div>
+      <div class="flex gap8">
+        <button class="btn btn-primary" onclick="createSkill()">Create Skill</button>
+        <button class="btn btn-outline" onclick="closeModal('add-skill-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── View Skill Modal ────────────────────────────────────────────────────── -->
+<div class="skill-modal" id="view-skill-modal">
+  <div class="skill-modal-box">
+    <div class="flex justify-between items-center mb16">
+      <h3 id="view-skill-title">Skill</h3>
+      <button class="btn btn-sm btn-outline" onclick="closeModal('view-skill-modal')">Close</button>
+    </div>
+    <pre id="view-skill-content" style="font-size:0.8rem;max-height:60vh;overflow-y:auto;white-space:pre-wrap"></pre>
+  </div>
+</div>
+
+<!-- ── Notification ────────────────────────────────────────────────────────── -->
+<div id="notify" style="display:none" class="notify"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════
+// Config
+// ════════════════════════════════════════════════════════════════════════
+const API = window.location.origin + '/api/v1';
+
+const MODELS = {
+  openrouter: [
+    'anthropic/claude-3.5-sonnet',
+    'anthropic/claude-3-haiku',
+    'openai/gpt-4o',
+    'openai/gpt-4o-mini',
+    'google/gemini-flash-1.5',
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'mistralai/mistral-7b-instruct:free',
+  ],
+  groq: [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'mixtral-8x7b-32768',
+    'gemma2-9b-it',
+  ],
+  gemini: [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-2.0-flash',
+  ],
+};
+
+const ENDPOINTS = [
+  {method:'GET',  path:'/health',         desc:'Server health check — tools loaded, MCP status'},
+  {method:'GET',  path:'/schema',         desc:'GURS schema documentation and error code reference'},
+  {method:'GET',  path:'/tools',          desc:'List all registered tools with full JSON Schema'},
+  {method:'GET',  path:'/tools/{name}',   desc:'Get a single tool's schema and description'},
+  {method:'POST', path:'/tools/{name}',   desc:'Execute any tool. Body: { "arguments": { … } }'},
+  {method:'GET',  path:'/skills',         desc:'List all skills with descriptions and agent_hint'},
+  {method:'GET',  path:'/skills/{name}',  desc:'Get a skill's full markdown content'},
+  {method:'POST', path:'/skills',         desc:'Create a new skill (writes to disk)'},
+  {method:'PUT',  path:'/skills/{name}',  desc:'Update an existing skill's content'},
+  {method:'DELETE',path:'/skills/{name}', desc:'Delete a skill (removes directory from disk)'},
+  {method:'GET',  path:'/agent-context',  desc:'Pre-formatted system-prompt block with all tools + skills'},
+];
+
+const TOOL_META = {
+  web_search:           {icon:'🔍', category:'Web'},
+  web_fetch:            {icon:'🌐', category:'Web'},
+  math_calculate:       {icon:'🧮', category:'Math'},
+  plot_chart:           {icon:'📊', category:'Visualization'},
+  document_create_pdf:  {icon:'📄', category:'Documents'},
+  document_create_docx: {icon:'📝', category:'Documents'},
+  document_create_xlsx: {icon:'📊', category:'Documents'},
+  document_create_pptx: {icon:'📑', category:'Documents'},
+};
+
+// ════════════════════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════════════════════
+let ALL_TOOLS = [];
+let ALL_SKILLS = [];
+let AGENT_HINT = '';
+let ENABLED_TOOLS = new Set();
+let ENABLED_SKILLS = new Set();
+let CONVERSATION = [];
+let IS_BUSY = false;
+let TURN_COUNT = 0;
+
+// ════════════════════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════════════════════
+(async () => {
+  await Promise.all([loadTools(), loadSkills()]);
+  renderEndpoints();
+  onProviderChange();
+  checkServerStatus();
+  setInterval(checkServerStatus, 30000);
+})();
+
+async function checkServerStatus() {
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    const el = document.getElementById('server-status');
+    if (d.ok) {
+      el.textContent = `● Online · ${d.result.tools_loaded} tools`;
+      el.className = 'badge-green';
+    } else {
+      el.textContent = '● Error';
+      el.className = '';
+      el.style.cssText = 'color:var(--red);font-size:0.7rem';
+    }
+  } catch {
+    const el = document.getElementById('server-status');
+    el.textContent = '● Offline';
+    el.className = '';
+    el.style.cssText = 'color:var(--red);font-size:0.7rem;flex-shrink:0';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Tools
+// ════════════════════════════════════════════════════════════════════════
+async function loadTools() {
+  try {
+    const r = await fetch(`${API}/tools`);
+    const d = await r.json();
+    ALL_TOOLS = d.result?.tools || [];
+    ENABLED_TOOLS = new Set(ALL_TOOLS.map(t => t.name));
+    document.getElementById('stat-tools').textContent = ALL_TOOLS.length;
+    renderToolCards();
+    renderPlaygroundTools();
+    renderAddSkillToolSelect();
+  } catch (e) {
+    document.getElementById('tools-list').innerHTML = `<div class="text-sm text-red">Could not load tools: ${e.message}</div>`;
+  }
+}
+
+function renderToolCards() {
+  const el = document.getElementById('tools-list');
+  if (!ALL_TOOLS.length) { el.innerHTML = '<div class="text-sm text-muted">No tools found.</div>'; return; }
+  el.innerHTML = ALL_TOOLS.map(t => {
+    const m = TOOL_META[t.name] || {icon:'🔧', category:'Tool'};
+    const props = t.input_schema?.properties || {};
+    const required = t.input_schema?.required || [];
+    const params = Object.entries(props);
+    return `
+    <div class="tool-card" id="tc-${t.name}">
+      <div class="tool-header" onclick="toggleTool('${t.name}')">
+        <div class="tool-header-left">
+          <span style="font-size:1.5rem">${m.icon}</span>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span class="tool-name-badge">${t.name}</span>
+              <span class="tag">${m.category}</span>
+            </div>
+            <div class="tool-desc-short">${t.description?.split('.')[0] || ''}</div>
+          </div>
+        </div>
+        <span class="tool-chevron">▾</span>
+      </div>
+      <div class="tool-body">
+        <p class="text-sm text-muted mt8">${t.description?.trim() || ''}</p>
+        ${params.length ? `
+        <table class="param-table">
+          <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            ${params.map(([k,v]) => `<tr>
+              <td>${k}${required.includes(k)?'<span class="param-req"> *</span>':''}</td>
+              <td><span class="badge-blue">${v.type||'any'}</span></td>
+              <td><code>${v.default !== undefined ? JSON.stringify(v.default) : '—'}</code></td>
+              <td class="text-xs text-muted">${v.description?.split('\n')[0]||''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : ''}
+        <div class="flex gap8 mt16" style="flex-wrap:wrap">
+          <button class="btn btn-sm btn-outline" onclick="copyToolCurl('${t.name}')">Copy cURL</button>
+          <button class="btn btn-sm btn-outline" onclick="tryCopyExample('${t.name}')">Copy JS</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTool(name) {
+  const el = document.getElementById(`tc-${name}`);
+  el.classList.toggle('open');
+}
+
+function renderPlaygroundTools() {
+  const el = document.getElementById('pg-tool-list');
+  el.innerHTML = ALL_TOOLS.map(t => `
+    <div class="tool-toggle-item">
+      <span>${TOOL_META[t.name]?.icon || '🔧'} ${t.name}</span>
+      <button class="skill-toggle on" id="pt-${t.name}" onclick="toggleEnabledTool('${t.name}')"></button>
+    </div>`).join('');
+}
+
+function toggleEnabledTool(name) {
+  const btn = document.getElementById(`pt-${name}`);
+  if (ENABLED_TOOLS.has(name)) {
+    ENABLED_TOOLS.delete(name);
+    btn.classList.remove('on');
+  } else {
+    ENABLED_TOOLS.add(name);
+    btn.classList.add('on');
+  }
+}
+
+function renderAddSkillToolSelect() {
+  const el = document.getElementById('new-skill-tool');
+  el.innerHTML = '<option value="">— select tool —</option>' +
+    ALL_TOOLS.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+}
+
+function copyToolCurl(name) {
+  const t = ALL_TOOLS.find(x => x.name === name);
+  const req = t?.input_schema?.required || [];
+  const props = t?.input_schema?.properties || {};
+  const args = {};
+  req.forEach(k => { const p = props[k]; args[k] = p?.type === 'integer' ? 10 : p?.type === 'boolean' ? true : 'example'; });
+  const cmd = `curl -X POST ${window.location.origin}/api/v1/tools/${name} \\\n  -H "Content-Type: application/json" \\\n  -d '{"arguments": ${JSON.stringify(args)}}'`;
+  navigator.clipboard.writeText(cmd).then(() => notify('cURL copied!', 'success'));
+}
+
+function tryCopyExample(name) {
+  const t = ALL_TOOLS.find(x => x.name === name);
+  const req = t?.input_schema?.required || [];
+  const props = t?.input_schema?.properties || {};
+  const args = {};
+  req.forEach(k => { const p = props[k]; args[k] = p?.type === 'integer' ? 10 : p?.type === 'boolean' ? true : 'example'; });
+  const js = `const result = await callTool("${name}", ${JSON.stringify(args, null, 2)});`;
+  navigator.clipboard.writeText(js).then(() => notify('JS copied!', 'success'));
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Skills
+// ════════════════════════════════════════════════════════════════════════
+async function loadSkills() {
+  try {
+    const r = await fetch(`${API}/skills`);
+    const d = await r.json();
+    ALL_SKILLS = d.result?.skills || [];
+    AGENT_HINT = d.result?.agent_hint || '';
+    ENABLED_SKILLS = new Set(ALL_SKILLS.map(s => s.name));
+    document.getElementById('stat-skills').textContent = ALL_SKILLS.length;
+    document.getElementById('skills-count').textContent = `${ALL_SKILLS.length} skills loaded`;
+    renderSkillCards();
+    renderPlaygroundSkills();
+  } catch (e) {
+    document.getElementById('skills-list').innerHTML = `<div class="text-sm text-red">Could not load skills: ${e.message}</div>`;
+  }
+}
+
+function renderSkillCards() {
+  const el = document.getElementById('skills-list');
+  if (!ALL_SKILLS.length) { el.innerHTML = '<div class="text-sm text-muted">No skills found.</div>'; return; }
+  el.innerHTML = ALL_SKILLS.map(s => `
+    <div class="skill-card" id="sc-${s.name}">
+      <button class="skill-toggle on" id="st-${s.name}" onclick="toggleEnabledSkill('${s.name}')"></button>
+      <div class="skill-info">
+        <div class="skill-name">${s.name}</div>
+        <div class="skill-tool">Tool: <code>${s.tool}</code> · v${s.version}</div>
+        <div class="skill-desc">${s.description}</div>
+        <div style="margin-top:6px">${(s.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        <div class="skill-actions">
+          <button class="btn btn-sm btn-outline" onclick="viewSkill('${s.name}')">View</button>
+          <button class="btn btn-sm btn-outline" style="border-color:var(--red);color:var(--red)" onclick="deleteSkill('${s.name}')">Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderPlaygroundSkills() {
+  const el = document.getElementById('pg-skill-list');
+  el.innerHTML = ALL_SKILLS.map(s => `
+    <div class="tool-toggle-item">
+      <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</span>
+      <button class="skill-toggle on" id="psk-${s.name}" onclick="togglePgSkill('${s.name}')"></button>
+    </div>`).join('') || '<div class="text-xs text-dim">No skills.</div>';
+}
+
+function toggleEnabledSkill(name) {
+  const btn = document.getElementById(`st-${name}`);
+  if (ENABLED_SKILLS.has(name)) { ENABLED_SKILLS.delete(name); btn.classList.remove('on'); }
+  else { ENABLED_SKILLS.add(name); btn.classList.add('on'); }
+}
+
+function togglePgSkill(name) {
+  const btn = document.getElementById(`psk-${name}`);
+  if (ENABLED_SKILLS.has(name)) { ENABLED_SKILLS.delete(name); btn.classList.remove('on'); }
+  else { ENABLED_SKILLS.add(name); btn.classList.add('on'); }
+}
+
+async function viewSkill(name) {
+  try {
+    const r = await fetch(`${API}/skills/${name}`);
+    const d = await r.json();
+    document.getElementById('view-skill-title').textContent = name;
+    document.getElementById('view-skill-content').textContent = d.result?.content_md || 'No content';
+    openModal('view-skill-modal');
+  } catch (e) { notify(`Error loading skill: ${e.message}`, 'error'); }
+}
+
+async function deleteSkill(name) {
+  if (!confirm(`Delete skill "${name}"? This cannot be undone.`)) return;
+  try {
+    const r = await fetch(`${API}/skills/${name}`, {method:'DELETE'});
+    const d = await r.json();
+    if (d.ok) { notify(`Skill "${name}" deleted`, 'success'); await loadSkills(); }
+    else notify(d.error?.message || 'Delete failed', 'error');
+  } catch (e) { notify(`Error: ${e.message}`, 'error'); }
+}
+
+async function createSkill() {
+  const name = document.getElementById('new-skill-name').value.trim();
+  const tool = document.getElementById('new-skill-tool').value;
+  const desc = document.getElementById('new-skill-desc').value.trim();
+  const tags = document.getElementById('new-skill-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const md   = document.getElementById('new-skill-md').value.trim();
+  if (!name) { notify('Skill name is required', 'error'); return; }
+  if (!md)   { notify('Skill content is required', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/skills`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, tool, description:desc, version:'1.0.0', tags, content_md:md}),
+    });
+    const d = await r.json();
+    if (d.ok) { notify(`Skill "${name}" created!`, 'success'); closeModal('add-skill-modal'); await loadSkills(); }
+    else notify(d.error?.message || 'Create failed', 'error');
+  } catch (e) { notify(`Error: ${e.message}`, 'error'); }
+}
+
+function copyAgentHint() {
+  navigator.clipboard.writeText(AGENT_HINT).then(() => notify('Agent hint copied to clipboard!', 'success'));
+}
+
+function showAddSkillModal() { openModal('add-skill-modal'); }
+
+// ════════════════════════════════════════════════════════════════════════
+// API Endpoints
+// ════════════════════════════════════════════════════════════════════════
+function renderEndpoints() {
+  const container = document.getElementById('endpoints');
+  const EXAMPLES = {
+    'GET /health':         `curl ${window.location.origin}/api/v1/health`,
+    'GET /tools':          `curl ${window.location.origin}/api/v1/tools`,
+    'GET /tools/{name}':   `curl ${window.location.origin}/api/v1/tools/web_search`,
+    'POST /tools/{name}':  `curl -X POST ${window.location.origin}/api/v1/tools/web_search \\\n  -H "Content-Type: application/json" \\\n  -d '{"arguments":{"query":"FastAPI tutorial","num_results":5}}'`,
+    'GET /skills':         `curl ${window.location.origin}/api/v1/skills`,
+    'GET /skills/{name}':  `curl ${window.location.origin}/api/v1/skills/web_search_skill`,
+    'POST /skills':        `curl -X POST ${window.location.origin}/api/v1/skills \\\n  -H "Content-Type: application/json" \\\n  -d '{"name":"my_skill","tool":"web_search","description":"Custom skill","content_md":"# My Skill\\n\\nAlways..."}'`,
+    'PUT /skills/{name}':  `curl -X PUT ${window.location.origin}/api/v1/skills/my_skill \\\n  -H "Content-Type: application/json" \\\n  -d '{"content_md":"# Updated\\n\\nNew instructions."}'`,
+    'DELETE /skills/{name}':`curl -X DELETE ${window.location.origin}/api/v1/skills/my_skill`,
+    'GET /agent-context':  `curl ${window.location.origin}/api/v1/agent-context`,
+  };
+  const methodClass = m => ({GET:'method-get',POST:'method-post',PUT:'method-put',DELETE:'method-delete'}[m]||'');
+  container.innerHTML = ENDPOINTS.map((ep, i) => {
+    const key = `${ep.method} ${ep.path}`;
+    const ex = EXAMPLES[key] || '';
+    return `
+    <div class="endpoint" id="ep-${i}">
+      <div class="endpoint-header" onclick="toggleEndpoint(${i})">
+        <span class="method ${methodClass(ep.method)}">${ep.method}</span>
+        <span class="endpoint-path">/api/v1${ep.path}</span>
+        <span class="text-muted text-sm" style="margin-left:auto;flex-shrink:0">${ep.desc}</span>
+      </div>
+      <div class="endpoint-body">
+        ${ex ? `<pre style="margin-top:12px"><code>${ex}</code></pre>` : ''}
+        <button class="btn btn-sm btn-outline mt8" onclick="event.stopPropagation();testEndpoint('${ep.method}','${ep.path}')">Try it</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleEndpoint(i) {
+  document.getElementById(`ep-${i}`).classList.toggle('open');
+}
+
+async function testEndpoint(method, path) {
+  const url = `${API}${path.replace('{name}', 'web_search')}`;
+  try {
+    const r = await fetch(url, {method, headers: method !== 'GET' ? {'Content-Type':'application/json'} : {}});
+    const d = await r.json();
+    notify(`${method} ${path} → ${r.status} ${d.ok ? '✓' : '✗'}`, d.ok ? 'success' : 'error');
+  } catch (e) { notify(`Error: ${e.message}`, 'error'); }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Playground
+// ════════════════════════════════════════════════════════════════════════
+function onProviderChange() {
+  const provider = document.getElementById('pg-provider').value;
+  const modelEl  = document.getElementById('pg-model');
+  modelEl.innerHTML = (MODELS[provider] || []).map(m => `<option value="${m}">${m}</option>`).join('');
+}
+
+function buildSystemPrompt() {
+  const active = ALL_SKILLS.filter(s => ENABLED_SKILLS.has(s.name));
+  let system = `You are Glas Agent, an AI assistant connected to the Glas MCP tool server.
+You have access to the following tools and must use them to answer questions.
+Always use tools when they would provide better, more accurate answers.
+
+## Available Tools
+${ALL_TOOLS.filter(t => ENABLED_TOOLS.has(t.name)).map(t => `- **${t.name}**: ${t.description?.split('\n')[0]}`).join('\n')}`;
+
+  if (active.length) {
+    system += '\n\n## Skill Guidance\n';
+    system += active.map(s => `### ${s.name} (for ${s.tool})\n${s.description}`).join('\n\n');
+  }
+  return system;
+}
+
+function buildOpenAITools() {
+  return ALL_TOOLS.filter(t => ENABLED_TOOLS.has(t.name)).map(t => ({
+    type: 'function',
+    function: { name: t.name, description: t.description?.trim(), parameters: t.input_schema },
+  }));
+}
+
+function buildGeminiTools() {
+  return [{
+    functionDeclarations: ALL_TOOLS.filter(t => ENABLED_TOOLS.has(t.name)).map(t => ({
+      name: t.name,
+      description: t.description?.trim(),
+      parameters: t.input_schema,
+    }))
+  }];
+}
+
+async function callLLM(messages, provider, model, apiKey) {
+  if (provider === 'gemini') return callGemini(messages, model, apiKey);
+
+  const endpoints = {
+    openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+    groq:       'https://api.groq.com/openai/v1/chat/completions',
+  };
+  const url = endpoints[provider];
+  const body = {
+    model,
+    messages,
+    tools: buildOpenAITools(),
+    tool_choice: 'auto',
+    max_tokens: 4096,
+    stream: false,
+  };
+  if (provider === 'openrouter') {
+    body.headers = { 'HTTP-Referer': window.location.origin, 'X-Title': 'Glas MCP Playground' };
+  }
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error(`${provider} API error ${r.status}: ${t.slice(0,300)}`); }
+  return await r.json();
+}
+
+async function callGemini(messages, model, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  // Convert messages to Gemini format
+  const sysMsg = messages.find(m => m.role === 'system');
+  const contents = messages.filter(m => m.role !== 'system').map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: Array.isArray(m.content)
+      ? m.content.map(c => c.type === 'text' ? {text:c.text} : {functionResponse:{name:c.name, response:{result:c.content}}})
+      : [{text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}],
+  }));
+  const body = {
+    contents,
+    tools: buildGeminiTools(),
+    generationConfig: {maxOutputTokens:4096},
+  };
+  if (sysMsg) body.systemInstruction = {parts:[{text: sysMsg.content}]};
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  if (!r.ok) { const t = await r.text(); throw new Error(`Gemini error ${r.status}: ${t.slice(0,300)}`); }
+  const d = await r.json();
+  // Normalize to OpenAI-like response
+  const cand = d.candidates?.[0];
+  const parts = cand?.content?.parts || [];
+  const toolCalls = parts.filter(p => p.functionCall).map((p,i) => ({
+    id: `call_${i}`, type:'function',
+    function: {name: p.functionCall.name, arguments: JSON.stringify(p.functionCall.args||{})}
+  }));
+  const textParts = parts.filter(p => p.text).map(p => p.text).join('');
+  return {
+    choices: [{
+      message: {
+        role: 'assistant',
+        content: textParts || null,
+        tool_calls: toolCalls.length ? toolCalls : undefined,
+      },
+      finish_reason: toolCalls.length ? 'tool_calls' : 'stop',
+    }]
+  };
+}
+
+async function executeTool(name, args) {
+  const r = await fetch(`${API}/tools/${name}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({arguments: args}),
+  });
+  return await r.json();
+}
+
+async function sendMessage() {
+  if (IS_BUSY) return;
+  const input = document.getElementById('pg-input');
+  const userText = input.value.trim();
+  if (!userText) return;
+
+  const apiKey  = document.getElementById('pg-apikey').value.trim();
+  const provider = document.getElementById('pg-provider').value;
+  const model   = document.getElementById('pg-model').value;
+
+  if (!apiKey) { notify('Enter your API key on the left', 'error'); return; }
+
+  IS_BUSY = true;
+  document.getElementById('pg-send-btn').disabled = true;
+  input.value = '';
+  autoResize(input);
+
+  addMsg('user', userText);
+  CONVERSATION.push({role:'user', content: userText});
+
+  const thinkingId = addThinking();
+
+  try {
+    // Initialize conversation with system prompt if first turn
+    const msgs = [{role:'system', content: buildSystemPrompt()}, ...CONVERSATION];
+    await agentLoop(msgs, provider, model, apiKey, thinkingId);
+  } catch (e) {
+    removeMsg(thinkingId);
+    addMsg('error', `Error: ${e.message}`);
+  }
+
+  TURN_COUNT++;
+  document.getElementById('pg-turn-count').textContent = TURN_COUNT;
+  IS_BUSY = false;
+  document.getElementById('pg-send-btn').disabled = false;
+}
+
+async function agentLoop(msgs, provider, model, apiKey, thinkingId, depth=0) {
+  if (depth > 10) { removeMsg(thinkingId); addMsg('error', 'Max tool call depth reached.'); return; }
+
+  const resp = await callLLM(msgs, provider, model, apiKey);
+  const msg = resp.choices?.[0]?.message;
+
+  if (!msg) { removeMsg(thinkingId); addMsg('error', 'Empty response from provider.'); return; }
+
+  // Text response
+  if (msg.content) {
+    removeMsg(thinkingId);
+    const displayText = msg.content;
+    addMsg('assistant', displayText);
+    CONVERSATION.push({role:'assistant', content: displayText});
+  }
+
+  // Tool calls
+  if (msg.tool_calls?.length) {
+    if (!msg.content) removeMsg(thinkingId);
+    msgs.push({role:'assistant', content: msg.content || null, tool_calls: msg.tool_calls});
+
+    for (const tc of msg.tool_calls) {
+      const name = tc.function.name;
+      let args = {};
+      try { args = JSON.parse(tc.function.arguments || '{}'); } catch {}
+
+      const toolMsgId = addToolCall(name, args);
+
+      try {
+        const result = await executeTool(name, args);
+        const resultStr = JSON.stringify(result.result || result, null, 2);
+        updateToolCall(toolMsgId, resultStr, result.ok);
+        msgs.push({
+          role: 'tool',
+          tool_call_id: tc.id,
+          name,
+          content: resultStr,
+        });
+      } catch (e) {
+        const errStr = `{"error": "${e.message}"}`;
+        updateToolCall(toolMsgId, errStr, false);
+        msgs.push({role:'tool', tool_call_id:tc.id, name, content:errStr});
+      }
+    }
+
+    // Continue the loop for the next assistant turn
+    const nextThinkingId = addThinking();
+    await agentLoop(msgs, provider, model, apiKey, nextThinkingId, depth+1);
+  }
+}
+
+function handleInputKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function clearChat() {
+  CONVERSATION = [];
+  TURN_COUNT = 0;
+  document.getElementById('pg-turn-count').textContent = '0';
+  document.getElementById('pg-messages').innerHTML = `
+    <div class="msg msg-assistant">Chat cleared. Ask me anything — I have access to all ${ALL_TOOLS.length} Glas MCP tools.</div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Chat DOM helpers
+// ════════════════════════════════════════════════════════════════════════
+let _msgId = 0;
+function _id() { return `msg-${++_msgId}`; }
+
+function addMsg(type, text) {
+  const id = _id();
+  const el = document.getElementById('pg-messages');
+  const classMap = {user:'msg-user',assistant:'msg-assistant',error:'msg-error'};
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = `msg ${classMap[type]||'msg-assistant'}`;
+  div.textContent = text;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  return id;
+}
+
+function addThinking() {
+  const id = _id();
+  const el = document.getElementById('pg-messages');
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'msg msg-thinking';
+  div.innerHTML = `<span class="spinner"></span> <span>Thinking <span class="dots"><span>.</span><span>.</span><span>.</span></span></span>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  return id;
+}
+
+function removeMsg(id) {
+  document.getElementById(id)?.remove();
+}
+
+function addToolCall(name, args) {
+  const id = _id();
+  const el = document.getElementById('pg-messages');
+  const div = document.createElement('div');
+  div.id = id;
+  div.className = 'msg msg-tool';
+  div.innerHTML = `
+    <div class="msg-tool-header"><span>🔧</span> Calling <code>${name}</code> <span class="spinner" style="margin-left:auto"></span></div>
+    <div class="msg-tool-body">${JSON.stringify(args, null, 2)}</div>`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  return id;
+}
+
+function updateToolCall(id, result, ok) {
+  const div = document.getElementById(id);
+  if (!div) return;
+  const header = div.querySelector('.msg-tool-header');
+  const body = div.querySelector('.msg-tool-body');
+  const spinner = header.querySelector('.spinner');
+  spinner?.remove();
+  const statusDot = document.createElement('span');
+  statusDot.textContent = ok ? ' ✓' : ' ✗';
+  statusDot.style.color = ok ? 'var(--green)' : 'var(--red)';
+  statusDot.style.marginLeft = 'auto';
+  header.appendChild(statusDot);
+  const truncated = result.length > 2000 ? result.slice(0,2000) + '\n…(truncated)' : result;
+  body.textContent = truncated;
+  div.closest('.pg-messages')?.scrollTo({top:99999,behavior:'smooth'});
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Modal helpers
+// ════════════════════════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.skill-modal').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════════════════════════════════════
+// Notifications
+// ════════════════════════════════════════════════════════════════════════
+function notify(msg, type='success') {
+  const el = document.getElementById('notify');
+  el.textContent = msg;
+  el.className = `notify ${type}`;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display='none'; }, 3500);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Nav active state
+// ════════════════════════════════════════════════════════════════════════
+const sections = ['hero','tools','api','skills','playground-section','about'];
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+      const id = e.target.id.replace('-section','');
+      const link = document.querySelector(`.nav-links a[href="#${id}"], .nav-links a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, {rootMargin:'-40% 0px -40% 0px'});
+sections.forEach(id => { const el = document.getElementById(id); if(el) observer.observe(el); });
+</script>
+</body>
+</html>
