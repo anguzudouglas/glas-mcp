@@ -22,12 +22,12 @@ class WebSearchTool(BaseTool):
 
             results = [
                 {
-                    "title": r.get("title", ""),
                     "url": r.get("href", ""),
+                    "title": r.get("title", ""),
                     "snippet": r.get("body", ""),
                 }
                 for r in raw
             ]
-            return {"query": query, "num_results": len(results), "results": results}
+            return results
         except Exception as e:
             return {"error": str(e)}
