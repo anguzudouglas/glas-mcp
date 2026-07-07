@@ -1,0 +1,45 @@
+name: openrouter
+display_name: OpenRouter
+logo: "◉"
+color: "#7C3AED"
+color_dim: "rgba(124,58,237,.12)"
+homepage: https://openrouter.ai
+docs_url: https://openrouter.ai/docs
+api_key_env: OPENROUTER_API_KEY
+api_key_placeholder: "sk-or-v1-…"
+api_key_prefix: "sk-or"
+api_base_url: https://openrouter.ai/api/v1/chat/completions
+auth_type: bearer
+extra_headers:
+  HTTP-Referer: https://glas-mcp.onrender.com
+  X-Title: Glas MCP Playground
+supports_tool_use: false
+request_format: openai
+response_format: openai
+models:
+  - id: anthropic/claude-sonnet-4-6
+    label: Claude Sonnet 4.6
+    context_window: 200000
+    description: Via Anthropic
+    default: true
+  - id: openai/gpt-4o
+    label: GPT-4o
+    context_window: 128000
+    description: OpenAI's flagship model
+  - id: google/gemini-2.0-flash-exp
+    label: Gemini 2.0 Flash
+    context_window: 1000000
+    description: Google's fast model
+  - id: meta-llama/llama-3.3-70b-instruct
+    label: Llama 3.3 70B
+    context_window: 128000
+    description: Meta's open model
+  - id: mistralai/mistral-large
+    label: Mistral Large
+    context_window: 131000
+    description: Mistral's flagship model
+  - id: deepseek/deepseek-r1
+    label: DeepSeek R1
+    context_window: 65000
+    description: Reasoning-focused model
+default_model: anthropic/claude-sonnet-4-6

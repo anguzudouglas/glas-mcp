@@ -1,0 +1,34 @@
+name: groq
+display_name: Groq
+logo: "▲"
+color: "#F97316"
+color_dim: "rgba(249,115,22,.12)"
+homepage: https://groq.com
+docs_url: https://console.groq.com/docs
+api_key_env: GROQ_API_KEY
+api_key_placeholder: "gsk_…"
+api_key_prefix: "gsk_"
+api_base_url: https://api.groq.com/openai/v1/chat/completions
+auth_type: bearer
+supports_tool_use: false
+request_format: openai
+response_format: openai
+models:
+  - id: llama-3.3-70b-versatile
+    label: Llama 3.3 70B
+    context_window: 128000
+    description: Meta's most capable open model
+    default: true
+  - id: llama-3.1-8b-instant
+    label: Llama 3.1 8B Instant
+    context_window: 128000
+    description: Ultra-fast small model
+  - id: mixtral-8x7b-32768
+    label: Mixtral 8x7B
+    context_window: 32768
+    description: Mixture-of-experts model
+  - id: gemma2-9b-it
+    label: Gemma 2 9B
+    context_window: 8192
+    description: Google's open model
+default_model: llama-3.3-70b-versatile

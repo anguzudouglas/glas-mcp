@@ -1,0 +1,31 @@
+name: google
+display_name: Google Gemini
+logo: "✦"
+color: "#4285F4"
+color_dim: "rgba(66,133,244,.12)"
+homepage: https://ai.google.dev
+docs_url: https://ai.google.dev/api/generate-content
+api_key_env: GOOGLE_API_KEY
+api_key_placeholder: "AIzaSy…"
+api_key_prefix: "AIza"
+api_base_url: https://generativelanguage.googleapis.com/v1beta/models
+auth_type: query_param
+auth_param: key
+supports_tool_use: false
+request_format: gemini
+response_format: gemini
+models:
+  - id: gemini-2.0-flash
+    label: Gemini 2.0 Flash
+    context_window: 1000000
+    description: Fast multimodal model
+    default: true
+  - id: gemini-2.0-flash-thinking-exp
+    label: Gemini 2.0 Flash Thinking
+    context_window: 1000000
+    description: Experimental reasoning model
+  - id: gemini-1.5-pro
+    label: Gemini 1.5 Pro
+    context_window: 2000000
+    description: Most capable Gemini 1.5 model
+default_model: gemini-2.0-flash

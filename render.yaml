@@ -1,15 +1,31 @@
 services:
   - type: web
     name: glas-mcp
-    env: docker
-    repo: https://github.com/anguzudouglas/glas-mcp
-    branch: main
-    dockerfilePath: Dockerfile
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     plan: free
+    region: oregon
+
+    # Build triggers
     autoDeploy: true
-    healthCheckPath: /health
+    branch: main
+
     envVars:
-      - key: DEV
-        value: "false"
+      - key: PORT
+        value: 8000
       - key: HOST
-        value: "0.0.0.0"
+        value: 0.0.0.0
+
+      # Optional — set these in the Render dashboard to enable server-side keys
+      # (playground always uses the user's browser-side key)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+    healthCheckPath: /health
