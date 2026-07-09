@@ -4,8 +4,9 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Install deps first (cached if package.json unchanged)
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci --silent
+# Using npm install (not npm ci) since no package-lock.json is committed
+COPY frontend/package.json ./
+RUN npm install
 
 # Copy source and build
 COPY frontend/ ./
