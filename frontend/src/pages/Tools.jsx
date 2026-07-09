@@ -171,7 +171,7 @@ export default function Tools() {
             onFocus={e => e.target.style.borderColor='var(--primary)'}
             onBlur={e => e.target.style.borderColor='var(--border)'}
           />
-          <div style={{ display:'flex', gap:4' }}>
+          <div style={{ display:'flex', gap:4 }}>
             {cats.map(c => (
               <button key={c} onClick={() => setFilter(c)} style={{
                 padding:'7px 14px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer',
